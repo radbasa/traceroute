@@ -12,8 +12,8 @@ import os
 import re
 import signal
 import sys
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 from subprocess import Popen, PIPE
 
 USER_AGENT = "traceroute/1.0 (+https://github.com/ayeowch/traceroute)"
@@ -53,12 +53,13 @@ class Traceroute(object):
 
         if not os.path.exists(filepath):
             if self.country == "LO":
+                self.print_debug('cmd={}'.format(self.source['url']))
                 status_code, traceroute = self.execute_cmd(self.source['url'])
             else:
                 status_code, traceroute = self.get_traceroute_output()
             if status_code != 0 and status_code != 200:
                 return {'error': status_code}
-            open(filepath, "w").write(traceroute)
+            open(filepath, "wb").write(traceroute)
         traceroute = open(filepath, "r").read()
 
         # hop_num, hosts
@@ -207,19 +208,20 @@ class Traceroute(object):
         Fetches webpage.
         """
         status_code = 200
-        request = urllib2.Request(url=url)
+        request = urllib.request.Request(url=url)
         request.add_header('User-Agent', USER_AGENT)
         if context:
-            data = urllib.urlencode(context)
-            request.add_data(data)
+            data = urllib.parse.urlencode(context)
+            request.data = data
         content = ""
         try:
-            response = urllib2.urlopen(request)
+            response = urllib.request.urlopen(request)
             self.print_debug("url={}".format(response.geturl()))
-            content = self.chunked_read(response)
-        except urllib2.HTTPError as err:
+            # content = self.chunked_read(response)
+            content = response.read()
+        except urllib.error.HTTPError as err:
             status_code = err.code
-        except urllib2.URLError:
+        except urllib.error.URLError:
             pass
         return (status_code, content)
 
@@ -239,7 +241,7 @@ class Traceroute(object):
                 data = response.read(bytes_per_read)
                 if not data:
                     break
-                content += data
+                content += str(data)
                 read_bytes += bytes_per_read
                 self.print_debug("read_bytes={}, {}".format(read_bytes, data))
             signal.alarm(0)
@@ -258,7 +260,7 @@ class Traceroute(object):
         Prints debug message to standard output.
         """
         if self.debug:
-            print("[DEBUG {}] {}".format(datetime.datetime.now(), msg))
+            print(("[DEBUG {}] {}".format(datetime.datetime.now(), msg)))
 
 
 def main():
@@ -304,7 +306,7 @@ def main():
                             timeout=options.timeout,
                             debug=options.debug)
     hops = traceroute.traceroute()
-    print(json.dumps(hops, indent=4))
+    print((json.dumps(hops, indent=4)))
     return 0
 
 
