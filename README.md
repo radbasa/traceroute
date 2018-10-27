@@ -1,4 +1,6 @@
 # traceroute
+Python 3 port of Addy Yeow's traceroute.
+
 Multi-source traceroute with geolocation information. Demo: [IP Address Lookup](https://dazzlepod.com/ip/) (under "Traceroute" tab)
 
 ![Using output from traceroute.py to plot hops on Google Map](https://raw.github.com/ayeowch/traceroute/master/screenshot.png)
